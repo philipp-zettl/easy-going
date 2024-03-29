@@ -9,6 +9,7 @@ import (
     "log"
     "os"
     "flag"
+    "strings"
     "net/http"
     "github.com/gorilla/sessions"
     "github.com/gorilla/websocket"
@@ -70,11 +71,16 @@ func performRequest(url string, body []byte) {
   defer resp.Body.Close()
 }
 
+func getPathValue(path string, position int) string {
+  var pathValues = strings.Split(path, "/")
+  return pathValues[position + 1]
+}
+
 func chat(w http.ResponseWriter, req *http.Request) {
     conn, _ := upgrader.Upgrade(w, req, nil) // error ignored for sake of simplicity
 
     // create random user id
-    userId := req.PathValue("chat_id")
+    userId := getPathValue(req.URL.Path, 1)
     user_connections[userId] = conn
 
     for _, chat_data := range chat_logs[userId].Messages {
