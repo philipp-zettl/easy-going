@@ -77,6 +77,23 @@ func getPathValue(path string, position int) string {
 }
 
 func chat(w http.ResponseWriter, req *http.Request) {
+
+    var isBackend = strings.Contains(req.URL.Path, "/backend")
+    if isBackend {
+      chat_backend(w, req)
+      return
+    }
+    var isChat = strings.Contains(req.URL.Path, "/chat")
+    if !isChat {
+      return
+    }
+    var isSend = strings.Contains(req.URL.Path, "/send")
+
+    if !isSend {
+      http.ServeFile(w, req, "templates/layout.html")
+      return
+    }
+
     conn, _ := upgrader.Upgrade(w, req, nil) // error ignored for sake of simplicity
 
     // create random user id
@@ -111,10 +128,6 @@ func chat(w http.ResponseWriter, req *http.Request) {
             return
         }
     }
-}
-
-func chat_window(w http.ResponseWriter, req *http.Request) {
-  http.ServeFile(w, req, "templates/layout.html")
 }
 
 func chat_backend(w http.ResponseWriter, req *http.Request) {
@@ -159,10 +172,9 @@ func main() {
     EASYBITS_URL = *urlPtr
     BEARER_TOKEN = *tokenPtr
 
-    http.HandleFunc("/backend/", chat_backend)
-    http.HandleFunc("/chat/{chat_id}/send", chat)
-    http.HandleFunc("GET /chat/{chat_id}", chat_window)
+    http.HandleFunc("/", chat)
 
+    log.Println("Server starting on port " + strconv.FormatInt(int64(*portPtr), 10))
     err := http.ListenAndServe(":" + strconv.FormatInt(int64(*portPtr), 10), nil)
     if err != nil {
         log.Fatal("ListenAndServe: ", err)
