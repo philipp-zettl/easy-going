@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Chat</title>
+    <link rel="stylesheet" href="static/style.css" />
+  </head>
+  <body>
+<style>
+  .content {
+    display: flex;
+    flex-direction: column;
+    justify-content: end;
+    align-items: center;
+  }
+  #output, #input_content, #input, .message {
+    width: 90%;
+  }
+  #input_content {
+    position: fixed;
+    bottom: 5px;
+  }
+
+  .message {
+    padding: 10px;
+    margin: 10px;
+    border-radius: 10px;
+    overflow: auto;
+  }
+
+  .message_user {
+    background-color: #f1f1f1;
+    text-align: right;
+  }
+
+  .message_bot {
+    background-color: #f1f1f1;
+    text-align: left;
+  }
+  .img {
+    max-width: 100%;
+    max-height: 100%;
+  }
+</style>
+    <h1>Chat</h1>
+
+    <div class="content">
+      <div id="output"></div>
+      <div id="input_content">
+        <input id="input" type="text" />
+        <button onclick="send()">Send</button>
+        <span id="status"></span>
+      </div>
+    </div>
+    <script>
+        var input = document.getElementById("input");
+        var output = document.getElementById("output");
+        var socket = new WebSocket(window.location.href.replace('http', 'ws') + "/send");
+        var status = document.getElementById("status");
+
+        // Execute a function when the user presses a key on the keyboard
+        input.addEventListener("keypress", function(event) {
+        // If the user presses the "Enter" key on the keyboard
+          if (event.key === "Enter") {
+            // Cancel the default action, if needed
+            send();
+          }
+        });
+        socket.onopen = function () {
+            status.innerHTML = "Status: Connected\n";
+        };
+
+        var create_elem = function(content, user){
+          var elem = document.createElement("pre");
+          elem.setAttribute("class", "message message_" + user.toLowerCase());
+          elem.innerHTML = content;
+          return elem;
+        }
+
+        socket.onmessage = function (e) {
+          data = JSON.parse(e.data);
+          
+          if(data.type == "text"){
+            output.innerHTML += create_elem(data.user + ":\n" + data.text, data.user).outerHTML + "\n";
+          } else if (data.type == "image"){
+            output.innerHTML += create_elem(data.user + ":\n<img class='img' src='data:image/png;base64, " + data.text + "'/>", data.user).outerHTML + '\n';
+          }
+        };
+
+        function send() {
+            socket.send(input.value);
+            input.value = "";
+        }
+    </script>
+  </body>
+</html>
