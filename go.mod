@@ -1,6 +1,6 @@
 module easybits.tech/easy-going
 
-go 1.22.0
+go 1.19.0
 
 require (
 	github.com/gorilla/sessions v1.2.2
