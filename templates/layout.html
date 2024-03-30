@@ -270,9 +270,9 @@ body {
           }
           var elem = "";
           if(data.type == "text"){
-            elem = create_elem("<span class='user-tag'>" + data.user + ":</span></br>" + data.text, data.user);
+            elem = create_elem("<span class='" + data.user.toLowerCase() + "-tag'>" + data.user + ":</span></br>" + data.text, data.user);
           } else if (data.type == "image"){
-            elem = create_elem("<span class='bot-tag'>" + data.user + ":</span></br><img class='img' src='data:image/png;base64, " + data.text + "'/>", data.user);
+            elem = create_elem("<span class='" + data.user.toLowerCase() + "-tag'>" + data.user + ":</span></br><img class='img' src='data:image/png;base64, " + data.text + "'/>", data.user);
           }
           lastGroup.appendChild(elem);
 
