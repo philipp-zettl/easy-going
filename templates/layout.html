@@ -1,61 +1,238 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
     <title>Chat</title>
-    <link rel="stylesheet" href="static/style.css" />
+    <link rel="stylesheet" href="https://site-assets.fontawesome.com/releases/v6.2.1/css/all.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
   </head>
   <body>
 <style>
-  .content {
-    display: flex;
-    flex-direction: column;
-    justify-content: end;
-    align-items: center;
-  }
-  #output, #input_content, #input, .message {
-    width: 90%;
-  }
-  #input_content {
-    position: fixed;
-    bottom: 5px;
+@font-face {
+  font-family: "CastoroTitling";
+  src: url("https://s3.us-east-2.amazonaws.com/cdn.spotlessplace.com/wp-content/CastoroTitling-Regular.ttf")
+    format("truetype");
+}
+
+@font-face {
+  font-family: BraahOne;
+  src: url("https://s3.us-east-2.amazonaws.com/cdn.spotlessplace.com/wp-content/Merriweather-Regular.ttf");
+}
+#status-elem {
+  font-size: 10px;
+  color: green;
+}
+body {
+  margin: 0;
+  font-family: "CastoroTitling";
+  font-size: 12px;
+  background-color: #000;
+}
+.bot-tag, .user-tag {
+  font-family: BraahOne;
+  font-size: 14px;
+  width: 100%;
+  display: inline-block;
+}
+.bot-tag {
+  text-align: left;
+  color: #999;
+}
+.user-tag {
+  text-align: right;
+  color: #4c4c4c;
+}
+.chat-main {
+  background-color: rgba(255, 255, 255, 0.04);
+  aspect-ratio: 13/16;
+  width: 800px;
+  max-width: 90%;
+  max-height: 90%;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 30px;
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  overflow: hidden;
+  transition: transform 1s ease, width 1s ease;
+}
+
+.chat-header {
+  color: #fff;
+  display: flex;
+  padding: 20px;
+  align-items: center;
+}
+
+.chat-header .pfp {
+  aspect-ratio: 1;
+  width: 40px;
+  border-radius: 100%;
+  cursor: pointer;
+  transition: transform 1s ease;
+}
+.pfp:hover {
+  transform: scale(1.2);
+}
+
+.chat-header .chat-center {
+  display: flex;
+  justify-content: center;
+  text-align: center;
+  width: 100%;
+}
+
+.chat-header .chat-center div p {
+  margin: 0;
+  font-weight: 700;
+}
+
+.chat-footer {
+  width: 100%;
+  height: 100px;
+  position: fixed;
+  bottom: 0;
+  display: inline-flex;
+  align-items: center;
+}
+
+.text-box {
+  float: right;
+  border-radius: 100px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  background: none;
+  padding: 8px 10px;
+  width: 65%;
+  outline: none;
+  color: #fff;
+  transition: transform 1s ease, width 1s ease;
+}
+.text-box:hover {
+  width: 75%;
+}
+
+.send-ico {
+  color: #fff;
+  position: absolute;
+  right: 0;
+  background: #2796db;
+  border-radius: 100%;
+  margin-right: 15px;
+  margin-top: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 13px;
+  cursor: pointer;
+}
+
+.text-box::placeholder {
+  color: #c6c6c6;
+  font-family: BraahOne;
+}
+
+.chat-content {
+  width: 100%;
+  bottom: 100px;
+  position: absolute;
+  max-height: 80%;
+  top: 100px;
+  text-align: center;
+  color: #afafaf;
+  overflow: auto;
+}
+
+.msg-btn {
+  color: #fff;
+  word-wrap: break-word;
+  border-radius: 15px;
+  display: inline-block;
+  max-width: 100%;
+  font-size: 12px;
+  margin: 15px 0;
+  padding: 0 15px;
+  overflow: scroll;
+  max-width: 90%;
+}
+.msg-btn p {
+  padding: 10px 15px;
+  margin: 0;
+}
+.msg-btn-holder {
+  padding-bottom: 30px;
+  width: 100%;
+  margin-top: 25px;
+}
+.message_bot {
+  background: #4c4c4c;
+  float: left;
+}
+.message_user {
+  background: #2798fc;
+  float: right;
+}
+@keyframes rotate {
+  from {
+    rotate: 0deg;
   }
 
-  .message {
-    padding: 10px;
-    margin: 10px;
-    border-radius: 10px;
-    overflow: auto;
+  50% {
+    scale: 1 1.5;
   }
 
-  .message_user {
-    background-color: #f1f1f1;
-    text-align: right;
+  to {
+    rotate: 360deg;
   }
+}
 
-  .message_bot {
-    background-color: #f1f1f1;
-    text-align: left;
-  }
+
   .img {
     max-width: 100%;
     max-height: 100%;
+    border-radius: 10px;
   }
+
+@media only screen and (max-width: 992px) {
+  /* … */
+  .chat-main {
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+  }
+}
 </style>
     <h1>Chat</h1>
-
-    <div class="content">
-      <div id="output"></div>
-      <div id="input_content">
-        <input id="input" type="text" />
-        <button onclick="send()">Send</button>
-        <span id="status"></span>
+    <div class="chat-main">
+      <div class="chat-header">
+        <div class="chat-center">
+          <div>
+            <img class="pfp" src="https://github.com/philipp-zettl/easy-going/assets/43775635/73db01f9-0deb-43a7-9d82-a8bd4e0b825e">
+            <p id="pfpname">Daniel <span id="status-elem">(Status: Disconnected)</span></p>
+          </div>
+        </div>
+      </div>
+      <div class="chat-content" id="chat-content">
+        <div style="padding:11px;" id="output">
+        </div>
+      </div>
+      <div class="chat-footer">
+        <div style="width:100%;padding:11px;">
+          <input placeholder="Message" class="text-box" name="input" id="input">
+          <div class="send-ico">
+            <i onclick="send()" style="position:absolute;" class="fas fa-paper-plane"></i>
+          </div>
+        </div>
       </div>
     </div>
+
     <script>
         var input = document.getElementById("input");
         var output = document.getElementById("output");
         var socket = new WebSocket(window.location.href.replace('http', 'ws') + "/send");
-        var status = document.getElementById("status");
+        var status_elem = document.getElementById("status-elem");
+        var lastGroup = null;
+        var lastUser = "";
 
         // Execute a function when the user presses a key on the keyboard
         input.addEventListener("keypress", function(event) {
@@ -66,24 +243,41 @@
           }
         });
         socket.onopen = function () {
-            status.innerHTML = "Status: Connected\n";
+          console.log("Connected", status_elem);
+            status_elem.innerHTML = "(Status: Connected)";
         };
 
         var create_elem = function(content, user){
-          var elem = document.createElement("pre");
-          elem.setAttribute("class", "message message_" + user.toLowerCase());
-          elem.innerHTML = content;
+          var elem = document.createElement("div");
+          elem.setAttribute("class", "msg-btn message message_" + user.toLowerCase());
+          var para = document.createElement("pre");
+          para.innerHTML = content;
+          elem.appendChild(para);
           return elem;
         }
 
         socket.onmessage = function (e) {
           data = JSON.parse(e.data);
-          
-          if(data.type == "text"){
-            output.innerHTML += create_elem(data.user + ":\n" + data.text, data.user).outerHTML + "\n";
-          } else if (data.type == "image"){
-            output.innerHTML += create_elem(data.user + ":\n<img class='img' src='data:image/png;base64, " + data.text + "'/>", data.user).outerHTML + '\n';
+          if (lastUser != data.user){
+            output.appendChild(document.createElement("br"));
+            lastGroup = document.createElement("div");
+            lastGroup.setAttribute("class", "msg-btn-holder");
+            output.appendChild(lastGroup);
+            lastUser = data.user;
+          } else {
+            lastGroup.appendChild(document.createElement("br"));
+            lastGroup.appendChild(document.createElement("br"));
           }
+          var elem = "";
+          if(data.type == "text"){
+            elem = create_elem("<span class='user-tag'>" + data.user + ":</span></br>" + data.text, data.user);
+          } else if (data.type == "image"){
+            elem = create_elem("<span class='bot-tag'>" + data.user + ":</span></br><img class='img' src='data:image/png;base64, " + data.text + "'/>", data.user);
+          }
+          lastGroup.appendChild(elem);
+
+          var content_div = document.getElementById("chat-content");
+          content_div.scrollTop = lastGroup.scrollHeight + 150;
         };
 
         function send() {

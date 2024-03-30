@@ -101,7 +101,7 @@ func chat(w http.ResponseWriter, req *http.Request) {
     user_connections[userId] = conn
 
     for _, chat_data := range chat_logs[userId].Messages {
-      if err := conn.WriteMessage(websocket.TextMessage, []byte(`{"text": "`+chat_data.Text+`", "user": "`+chat_data.User+`", "type": "`+chat_data.Type+`"}`)); err != nil {
+      if err := conn.WriteMessage(websocket.TextMessage, []byte(`{"text": "`+strings.Replace(chat_data.Text, "\"", "\\\"", -1)+`", "user": "`+chat_data.User+`", "type": "`+chat_data.Type+`"}`)); err != nil {
           return
       }
     }
@@ -117,14 +117,14 @@ func chat(w http.ResponseWriter, req *http.Request) {
         var text = string(msg)
         // perform request to backend
         var timestamp = strconv.FormatInt(time.Now().Unix(), 10)
-        performRequest(EASYBITS_URL, []byte(`{"message": {"recipient": {"id": "`+string(userId)+`"}, "text": "`+text+`"}, "timestamp": "`+string(timestamp)+`"}`))
+        performRequest(EASYBITS_URL, []byte(`{"message": {"recipient": {"id": "`+string(userId)+`"}, "text": "`+strings.Replace(text, "\"", "\\\"", -1)+`"}, "timestamp": "`+string(timestamp)+`"}`))
 
         chat_data := chat_logs[userId]
         messages := append(chat_data.Messages, Message{Text: text, User: "User", Type: "text"})
         chat_logs[userId] = ChatData{Messages: messages}
 
         // Write message back to browser
-        if err = conn.WriteMessage(msgType, []byte(`{"text": "`+string(msg)+`", "user": "User", "type": "text"}`)); err != nil {
+        if err = conn.WriteMessage(msgType, []byte(`{"text": "`+strings.Replace(string(msg), "\"", "\\\"", -1)+`", "user": "User", "type": "text"}`)); err != nil {
             return
         }
     }
