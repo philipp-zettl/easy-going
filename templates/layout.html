@@ -244,7 +244,7 @@ body {
         <div style="width:100%;padding:11px;">
           <input placeholder="Message" class="text-box" name="input" id="input">
           <div class="send-ico">
-            <i onclick="send()" style="position:absolute;" class="fas fa-paper-plane"></i>
+            <i id="send-elem" style="position:absolute;" class="fas fa-paper-plane"></i>
           </div>
           <div class="trash-ico">
             <i id="clear-elem" style="position:absolute;" class="fas fa-trash"></i>
@@ -259,6 +259,7 @@ body {
         var socket = new WebSocket(window.location.href.replace('http', 'ws') + "/send");
         var status_elem = document.getElementById("status-elem");
         var clear_elem = document.getElementById("clear-elem");
+        var send_elem = document.getElementById("send-elem");
         var lastGroup = null;
         var lastUser = "";
 
@@ -274,9 +275,8 @@ body {
             status_elem.innerHTML = "(Status: Connected)";
         };
 
-        clear_elem.onclick = function(){
-          clear();
-        }
+        clear_elem.onclick = clear
+        send_elem.onclick = send
 
         var create_elem = function(content, user){
           var elem = document.createElement("div");
