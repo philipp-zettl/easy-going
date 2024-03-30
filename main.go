@@ -76,6 +76,24 @@ func getPathValue(path string, position int) string {
   return pathValues[position + 1]
 }
 
+func escape_string(text string) string {
+  return strings.Replace(
+    strings.Replace(
+      strings.Replace(
+        strings.Replace(
+          strings.Replace(
+            strings.Replace(
+              strings.Replace(
+                string(text), "\\", "\\\\", -1,
+              ), "\\n", "\\\\n", -1,
+            ), "\\r", "\\\\r", -1,
+          ), "\\\"", "\\\\\"", -1,
+        ), "\\'", "\\\\'", -1,
+      ), "\\`", "\\\\`", -1,
+    ), "\\t", "\\\\t", -1,
+  )
+}
+
 func chat(w http.ResponseWriter, req *http.Request) {
 
     var isBackend = strings.Contains(req.URL.Path, "/backend")
@@ -101,7 +119,13 @@ func chat(w http.ResponseWriter, req *http.Request) {
     user_connections[userId] = conn
 
     for _, chat_data := range chat_logs[userId].Messages {
-      if err := conn.WriteMessage(websocket.TextMessage, []byte(`{"text": "`+strings.Replace(chat_data.Text, "\"", "\\\"", -1)+`", "user": "`+chat_data.User+`", "type": "`+chat_data.Type+`"}`)); err != nil {
+      b, err := json.Marshal(chat_data)
+      if err != nil {
+          fmt.Println(err)
+          return
+      }
+
+      if err := conn.WriteMessage(websocket.TextMessage, []byte(string(b))); err != nil {
           return
       }
     }
@@ -114,17 +138,28 @@ func chat(w http.ResponseWriter, req *http.Request) {
         }
 
         // Print the message to the console
-        var text = string(msg)
+        var text = escape_string(string(msg))
+        if text == "[CLEAR]" {
+          chat_logs[userId] = ChatData{Messages: []Message{}}
+          continue
+        }
         // perform request to backend
         var timestamp = strconv.FormatInt(time.Now().Unix(), 10)
-        performRequest(EASYBITS_URL, []byte(`{"message": {"recipient": {"id": "`+string(userId)+`"}, "text": "`+strings.Replace(text, "\"", "\\\"", -1)+`"}, "timestamp": "`+string(timestamp)+`"}`))
+        performRequest(EASYBITS_URL, []byte(`{"message": {"recipient": {"id": "`+string(userId)+`"}, "text": "`+escape_string(text)+`"}, "timestamp": "`+string(timestamp)+`"}`))
 
         chat_data := chat_logs[userId]
-        messages := append(chat_data.Messages, Message{Text: text, User: "User", Type: "text"})
+        new_message := Message{Text: text, User: "User", Type: "text"}
+        messages := append(chat_data.Messages, new_message)
         chat_logs[userId] = ChatData{Messages: messages}
+        b, err := json.Marshal(new_message)
+        if err != nil {
+            fmt.Println(err)
+            return
+        }
+
 
         // Write message back to browser
-        if err = conn.WriteMessage(msgType, []byte(`{"text": "`+strings.Replace(string(msg), "\"", "\\\"", -1)+`", "user": "User", "type": "text"}`)); err != nil {
+        if err = conn.WriteMessage(msgType, []byte(string(b))); err != nil {
             return
         }
     }
@@ -135,21 +170,29 @@ func chat_backend(w http.ResponseWriter, req *http.Request) {
   json.NewDecoder(req.Body).Decode(&message)
 
   var userId = message.Message.Recipient.Id
+  new_message := Message{Text: message.Message.Data, User: "Bot", Type: message.Message.Type}
+
   if _, ok := chat_logs[userId]; !ok {
     chat_logs[userId] = ChatData{
       Messages: []Message{
-        {Text: message.Message.Data, User: "Bot",},
+        new_message,
       },
     }
   } else {
-    var msgs = append(chat_logs[userId].Messages, Message{Text: message.Message.Data, User: "Bot", Type: message.Message.Type})
+    var msgs = append(chat_logs[userId].Messages, new_message)
     chat_logs[userId] = ChatData{Messages: msgs}
   }
   w.WriteHeader(http.StatusOK)
 
   user_conn := user_connections[userId]
   if user_conn != nil {
-    user_conn.WriteMessage(websocket.TextMessage, []byte(`{"text": "`+message.Message.Data+`", "user": "Bot", "type": "`+message.Message.Type+`"}`))
+    b, err := json.Marshal(new_message)
+    if err != nil {
+        fmt.Println(err)
+        return
+    }
+
+    user_conn.WriteMessage(websocket.TextMessage, []byte(string(b)));
   }
 
   return
